@@ -90,7 +90,12 @@ const LEVEL_COLOR: Record<string, string> = {
 
 type Workout = typeof WORKOUTS[0];
 
-export default function Index() {
+interface IndexProps {
+  user: { name: string; email: string };
+  onLogout: () => void;
+}
+
+export default function Index({ user, onLogout }: IndexProps) {
   const [activeTab, setActiveTab] = useState<"home" | "library">("home");
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
   const [filter, setFilter] = useState("Все");
@@ -105,15 +110,19 @@ export default function Index() {
           <span className="font-display text-2xl text-stone-700 tracking-wide italic">
             Движение
           </span>
-          <button className="w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm">
-            <Icon name="User" size={16} className="text-stone-600" />
+          <button
+            onClick={onLogout}
+            className="w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm"
+            title="Выйти"
+          >
+            <Icon name="LogOut" size={15} className="text-stone-600" />
           </button>
         </div>
       </nav>
 
       <div className="pb-24">
         {activeTab === "home" && (
-          <HomeTab onOpenLibrary={() => setActiveTab("library")} />
+          <HomeTab onOpenLibrary={() => setActiveTab("library")} userName={user.name} />
         )}
         {activeTab === "library" && !selectedWorkout && (
           <LibraryTab
@@ -159,9 +168,10 @@ export default function Index() {
   );
 }
 
-function HomeTab({ onOpenLibrary }: { onOpenLibrary: () => void }) {
+function HomeTab({ onOpenLibrary, userName }: { onOpenLibrary: () => void; userName: string }) {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Доброе утро" : hour < 18 ? "Добрый день" : "Добрый вечер";
+  const displayName = userName.charAt(0).toUpperCase() + userName.slice(1);
 
   return (
     <div>
@@ -174,7 +184,7 @@ function HomeTab({ onOpenLibrary }: { onOpenLibrary: () => void }) {
         <div className="hero-gradient absolute inset-0" />
         <div className="absolute bottom-0 left-0 right-0 px-6 pb-10">
           <p className="opacity-0-start animate-fade-up delay-100 font-body text-white/70 text-sm font-light tracking-widest uppercase mb-2">
-            {greeting}
+            {greeting}, {displayName}
           </p>
           <h1 className="opacity-0-start animate-fade-up delay-200 font-display text-white text-5xl font-light leading-tight mb-3">
             Твой день<br />начинается<br /><em>здесь</em>
