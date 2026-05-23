@@ -1,223 +1,182 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface PhoneFrameProps {
   children: React.ReactNode;
 }
 
+// Соотношение iPhone 15 Pro: 393 × 852
+const PHONE_W = 393;
+const PHONE_H = 852;
+
 export default function PhoneFrame({ children }: PhoneFrameProps) {
   const [isMobile, setIsMobile] = useState(false);
+  const [scale, setScale] = useState(1);
+  const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
+    const update = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      setIsMobile(w < 768);
+
+      // Телефон занимает 92vh по высоте, но не выходит за ширину
+      const scaleH = (h * 0.92) / PHONE_H;
+      const scaleW = (w * 0.42) / PHONE_W; // макс 42% ширины экрана для телефона
+      setScale(Math.min(scaleH, scaleW, 1));
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
   }, []);
 
-  if (isMobile || true) {
-    return <>{children}</>;
-  }
+  if (isMobile) return <>{children}</>;
+
+  const phoneW = PHONE_W * scale;
+  const phoneH = PHONE_H * scale;
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center"
+      className="fixed inset-0 flex items-center justify-center overflow-hidden"
       style={{
-        background: "linear-gradient(135deg, #e8ede8 0%, #d4ddd0 40%, #c8d4c4 100%)",
+        background: "linear-gradient(135deg, #dce8dc 0%, #ccd8c8 40%, #bfcfbb 100%)",
       }}
     >
-      {/* Фоновый декор */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div
-          className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full opacity-30"
-          style={{ background: "radial-gradient(circle, #a8c5a0 0%, transparent 70%)" }}
-        />
-        <div
-          className="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] rounded-full opacity-20"
-          style={{ background: "radial-gradient(circle, #8fb589 0%, transparent 70%)" }}
-        />
+      {/* Фоновые блики */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-15%] right-[-8%] w-[600px] h-[600px] rounded-full opacity-25"
+          style={{ background: "radial-gradient(circle, #a8c5a0 0%, transparent 65%)" }} />
+        <div className="absolute bottom-[-15%] left-[-8%] w-[500px] h-[500px] rounded-full opacity-20"
+          style={{ background: "radial-gradient(circle, #8fb589 0%, transparent 65%)" }} />
       </div>
 
-      {/* Телефон */}
-      <div className="relative z-10 flex items-center gap-12">
+      {/* Контент: телефон + боковые надписи */}
+      <div className="relative z-10 flex items-center" style={{ gap: 40 * scale }}>
 
-        {/* Боковая подпись */}
-        <div className="hidden xl:block text-right">
-          <p
-            className="text-stone-500 text-sm font-light tracking-widest uppercase mb-2"
-            style={{ fontFamily: "'Golos Text', sans-serif" }}
-          >
+        {/* Левый текст */}
+        <div
+          className="hidden lg:flex flex-col items-end gap-3"
+          style={{ transform: `scale(${scale})`, transformOrigin: "right center" }}
+        >
+          <p className="text-stone-400 text-xs tracking-[0.2em] uppercase font-body">
             Фитнес-приложение
           </p>
-          <h2
-            className="text-stone-700 text-4xl font-light leading-tight italic"
-            style={{ fontFamily: "'Cormorant', serif" }}
-          >
+          <h2 className="text-stone-700 text-5xl font-display font-light leading-tight italic text-right">
             Движение<br />— жизнь
           </h2>
-          <div className="mt-6 flex flex-col gap-2 items-end">
-            {["Тренировки", "Прогресс", "Мотивация"].map((item) => (
-              <span
-                key={item}
-                className="text-stone-400 text-xs tracking-wider uppercase"
-                style={{ fontFamily: "'Golos Text', sans-serif" }}
-              >
-                {item}
-              </span>
+          <div className="flex flex-col gap-1.5 items-end mt-3">
+            {["Тренировки", "Прогресс", "Мотивация"].map((t) => (
+              <span key={t} className="text-stone-400 text-xs tracking-widest uppercase font-body">{t}</span>
             ))}
           </div>
         </div>
 
-        {/* Корпус телефона */}
+        {/* Телефон */}
         <div
-          className="relative"
-          style={{ width: 390, height: 844 }}
+          ref={wrapRef}
+          className="relative flex-shrink-0"
+          style={{ width: phoneW, height: phoneH }}
         >
           {/* Тень */}
-          <div
-            className="absolute inset-0 rounded-[54px]"
-            style={{
-              boxShadow: "0 60px 120px rgba(0,0,0,0.35), 0 20px 40px rgba(0,0,0,0.2)",
-              transform: "translateY(8px) scale(0.98)",
-            }}
-          />
+          <div className="absolute inset-0 rounded-[54px]" style={{
+            boxShadow: `0 ${60 * scale}px ${120 * scale}px rgba(0,0,0,0.4), 0 ${20 * scale}px ${40 * scale}px rgba(0,0,0,0.2)`,
+            transform: "translateY(2%) scale(0.97)",
+          }} />
 
           {/* Корпус */}
-          <div
-            className="absolute inset-0 rounded-[54px]"
-            style={{
-              background: "linear-gradient(160deg, #2a2a2a 0%, #1a1a1a 50%, #111 100%)",
-              boxShadow:
-                "inset 0 0 0 1px rgba(255,255,255,0.08), 0 0 0 1px rgba(0,0,0,0.5)",
-            }}
-          />
+          <div className="absolute inset-0" style={{
+            borderRadius: 54 * scale,
+            background: "linear-gradient(160deg, #2c2c2c 0%, #1a1a1a 50%, #0f0f0f 100%)",
+            boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.09), 0 0 0 1px rgba(0,0,0,0.6)",
+          }} />
 
-          {/* Боковые кнопки — левая */}
-          <div
-            className="absolute rounded-r-sm"
-            style={{
-              left: -3,
-              top: 140,
-              width: 4,
-              height: 36,
-              background: "#222",
-              boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05)",
-            }}
-          />
-          <div
-            className="absolute rounded-r-sm"
-            style={{
-              left: -3,
-              top: 192,
-              width: 4,
-              height: 64,
-              background: "#222",
-              boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05)",
-            }}
-          />
-          <div
-            className="absolute rounded-r-sm"
-            style={{
-              left: -3,
-              top: 268,
-              width: 4,
-              height: 64,
-              background: "#222",
-              boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05)",
-            }}
-          />
+          {/* Кнопки — левые */}
+          {[
+            { top: 0.165, h: 0.042 },
+            { top: 0.226, h: 0.075 },
+            { top: 0.315, h: 0.075 },
+          ].map((b, i) => (
+            <div key={i} className="absolute rounded-r-sm" style={{
+              left: -3 * scale,
+              top: phoneH * b.top,
+              width: 4 * scale,
+              height: phoneH * b.h,
+              background: "#1e1e1e",
+              boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)",
+            }} />
+          ))}
 
-          {/* Боковая кнопка — правая */}
-          <div
-            className="absolute rounded-l-sm"
-            style={{
-              right: -3,
-              top: 192,
-              width: 4,
-              height: 96,
-              background: "#222",
-              boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05)",
-            }}
-          />
+          {/* Кнопка — правая */}
+          <div className="absolute rounded-l-sm" style={{
+            right: -3 * scale,
+            top: phoneH * 0.226,
+            width: 4 * scale,
+            height: phoneH * 0.113,
+            background: "#1e1e1e",
+            boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)",
+          }} />
 
-          {/* Экран — внешняя рамка */}
-          <div
-            className="absolute overflow-hidden"
-            style={{
-              inset: 10,
-              borderRadius: 46,
-              background: "#000",
-            }}
-          >
+          {/* Экран */}
+          <div className="absolute overflow-hidden" style={{
+            inset: 10 * scale,
+            borderRadius: 46 * scale,
+            background: "#000",
+          }}>
             {/* Dynamic Island */}
-            <div
-              className="absolute z-20 left-1/2 -translate-x-1/2"
-              style={{
-                top: 12,
-                width: 120,
-                height: 34,
-                background: "#000",
-                borderRadius: 20,
-              }}
-            />
+            <div className="absolute z-20 left-1/2 -translate-x-1/2" style={{
+              top: 12 * scale,
+              width: 120 * scale,
+              height: 34 * scale,
+              background: "#000",
+              borderRadius: 20 * scale,
+            }} />
 
-            {/* Бликовое стекло */}
-            <div
-              className="absolute inset-0 z-10 pointer-events-none"
-              style={{
-                background:
-                  "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%)",
-                borderRadius: 46,
-              }}
-            />
+            {/* Блик стекла */}
+            <div className="absolute inset-0 z-10 pointer-events-none" style={{
+              background: "linear-gradient(135deg, rgba(255,255,255,0.055) 0%, transparent 45%)",
+              borderRadius: 46 * scale,
+            }} />
 
-            {/* Контент приложения */}
-            <div
-              className="absolute inset-0 overflow-y-auto overflow-x-hidden"
-              style={{
-                borderRadius: 46,
-                WebkitOverflowScrolling: "touch",
-              }}
-            >
-              {children}
+            {/* Контент — масштабируем внутри */}
+            <div className="absolute inset-0 overflow-hidden" style={{ borderRadius: 46 * scale }}>
+              <div
+                style={{
+                  width: PHONE_W,
+                  height: PHONE_H,
+                  transform: `scale(${scale})`,
+                  transformOrigin: "top left",
+                  overflowY: "auto",
+                  overflowX: "hidden",
+                  WebkitOverflowScrolling: "touch" as React.CSSProperties["WebkitOverflowScrolling"],
+                }}
+              >
+                {children}
+              </div>
             </div>
           </div>
 
-          {/* Внешнее стекло-блик */}
-          <div
-            className="absolute pointer-events-none"
-            style={{
-              inset: 10,
-              borderRadius: 46,
-              background:
-                "linear-gradient(160deg, rgba(255,255,255,0.07) 0%, transparent 40%)",
-            }}
-          />
+          {/* Внешний блик корпуса */}
+          <div className="absolute pointer-events-none" style={{
+            inset: 10 * scale,
+            borderRadius: 46 * scale,
+            background: "linear-gradient(160deg, rgba(255,255,255,0.06) 0%, transparent 35%)",
+          }} />
         </div>
 
-        {/* Правая подпись */}
-        <div className="hidden xl:block">
-          <div className="flex flex-col gap-4">
-            {[
-              { num: "4", label: "тренировки\nв неделю" },
-              { num: "185", label: "минут\nактивности" },
-              { num: "1 240", label: "калорий\nсожжено" },
-            ].map((stat) => (
-              <div key={stat.label} className="bg-white/40 backdrop-blur-sm rounded-2xl p-4 w-32 text-center">
-                <p
-                  className="text-stone-800 text-2xl font-light"
-                  style={{ fontFamily: "'Cormorant', serif" }}
-                >
-                  {stat.num}
-                </p>
-                <p
-                  className="text-stone-500 text-xs leading-tight mt-1 whitespace-pre-line"
-                  style={{ fontFamily: "'Golos Text', sans-serif" }}
-                >
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </div>
+        {/* Правые карточки */}
+        <div
+          className="hidden lg:flex flex-col gap-3"
+          style={{ transform: `scale(${scale})`, transformOrigin: "left center" }}
+        >
+          {[
+            { num: "4", label: "тренировки\nв неделю" },
+            { num: "185", label: "минут\nактивности" },
+            { num: "1 240", label: "калорий\nсожжено" },
+          ].map((s) => (
+            <div key={s.label} className="bg-white/35 backdrop-blur-sm rounded-2xl p-4 w-32 text-center border border-white/20">
+              <p className="font-display text-stone-800 text-3xl font-light">{s.num}</p>
+              <p className="font-body text-stone-500 text-xs leading-snug mt-1 whitespace-pre-line">{s.label}</p>
+            </div>
+          ))}
         </div>
 
       </div>
