@@ -14,7 +14,7 @@ export default function PhoneFrame({ children }: PhoneFrameProps) {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  if (isMobile) {
+  if (isMobile || true) {
     return <>{children}</>;
   }
 
